@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	uc "github.com/danrl/update-check/pb"
+	uc "github.com/egymgmbh/mobile-update-check/pb"
 )
 
 type ucs struct {

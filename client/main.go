@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	uc "github.com/danrl/update-check/pb"
+	uc "github.com/egymgmbh/mobile-update-check/pb"
 	"google.golang.org/grpc"
 )
 
