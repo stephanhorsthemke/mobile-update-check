@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+service UpdateCheck {
+  rpc VersionCheck (UpdateVersion) returns (UpdateAction) {}
+}
+
+message UpdateVersion {
+  string version = 1;
+}
+
+message UpdateAction {
+  MyAction action = 1;
+}
+
+enum MyAction {
+  NONE = 0;
+  ADVICE = 1;
+  FORCE = 2;
+}
