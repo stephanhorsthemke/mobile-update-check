@@ -1,18 +1,31 @@
 syntax = "proto3";
 
-service UpdateCheck {
-  rpc VersionCheck (UpdateVersion) returns (UpdateAction) {}
+service UpdateCheckService {
+  rpc Query (UpdateCheckRequest) returns (UpdateCheckResponse) {}
 }
 
-message UpdateVersion {
-  string version = 1;
+message UpdateCheckRequest {
+  OSType OS = 1;
+  string OSVersion = 2;
+  ProductType Product = 3;
+  string ProductVersion = 4;
 }
 
-message UpdateAction {
-  MyAction action = 1;
+enum OSType {
+  IOS = 0;
+  ANDROID = 1;
 }
 
-enum MyAction {
+enum ProductType {
+  FITAPP = 0;
+  TRAINERAPP = 1;
+}
+
+message UpdateCheckResponse {
+  ResponseAction action = 1;
+}
+
+enum ResponseAction {
   NONE = 0;
   ADVICE = 1;
   FORCE = 2;

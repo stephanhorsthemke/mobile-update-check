@@ -6,16 +6,24 @@ import (
 	"fmt"
 	"log"
 
-	uc "github.com/egymgmbh/mobile-update-check/pb"
+	pb "github.com/egymgmbh/mobile-update-check/pb"
 	"google.golang.org/grpc"
 )
 
 func main() {
 	serverAddress := flag.String("server-address", "localhost:8080", "Address of update check server to query.")
+	os := flag.String("os", pb.OSType_name[0], "Operating system name.")
+	osVersion := flag.String("os-version", "1.0.0", "Operating system version.")
+	product := flag.String("product", pb.ProductType_name[0], "Product name.")
+	productVersion := flag.String("product-version", "1.0.0", "Product version.")
 	flag.Parse()
 
-	if len(flag.Args()) < 1 {
-		log.Fatalf("missing version")
+	// input validation
+	if _, ok := pb.OSType_value[*os]; !ok {
+		log.Fatalf("bad os name: %v", *os)
+	}
+	if _, ok := pb.ProductType_value[*product]; !ok {
+		log.Fatalf("bad product name: %v", *product)
 	}
 
 	conn, err := grpc.Dial(*serverAddress, grpc.WithInsecure())
@@ -24,14 +32,16 @@ func main() {
 	}
 	defer conn.Close()
 
-	ucClient := uc.NewUpdateCheckClient(conn)
+	pbClient := pb.NewUpdateCheckServiceClient(conn)
 
-	action, err := ucClient.VersionCheck(context.Background(), &uc.UpdateVersion{
-		Version: flag.Args()[0],
+	resp, err := pbClient.Query(context.Background(), &pb.UpdateCheckRequest{
+		OS: (pb.OSType) (pb.OSType_value[*os]),
+		OSVersion: *osVersion,
+		Product: (pb.ProductType) (pb.ProductType_value[*product]),
+		ProductVersion: *productVersion,
 	})
 	if err != nil {
 		log.Fatalf("version check: %v", err)
 	}
-	fmt.Printf("%v\n", action)
-
+	fmt.Printf("%v\n", resp.Action.String())
 }
