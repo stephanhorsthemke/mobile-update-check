@@ -35,9 +35,9 @@ func main() {
 	pbClient := pb.NewUpdateCheckServiceClient(conn)
 
 	resp, err := pbClient.Query(context.Background(), &pb.UpdateCheckRequest{
-		OS: (pb.OSType) (pb.OSType_value[*os]),
-		OSVersion: *osVersion,
-		Product: (pb.ProductType) (pb.ProductType_value[*product]),
+		OS:             (pb.OSType)(pb.OSType_value[*os]),
+		OSVersion:      *osVersion,
+		Product:        (pb.ProductType)(pb.ProductType_value[*product]),
 		ProductVersion: *productVersion,
 	})
 	if err != nil {
