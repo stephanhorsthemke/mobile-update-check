@@ -26,5 +26,3 @@ jobs:
             done
       after_success:
         - bash <(curl -s https://codecov.io/bash)
-    - stage: build
-      script: docker build -t test/app .
