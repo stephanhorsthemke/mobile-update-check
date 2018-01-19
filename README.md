@@ -5,7 +5,6 @@
 [![codecov](https://codecov.io/gh/egymgmbh/mobile-update-check/branch/master/graph/badge.svg)](https://codecov.io/gh/egymgmbh/mobile-update-check)
 [![Go Report Card](https://goreportcard.com/badge/github.com/egymgmbh/mobile-update-check)](https://goreportcard.com/report/github.com/egymgmbh/mobile-update-check)
 
+## deploy
 
-## compile protobuf to grpc
-
-    protoc --go_out=plugins=grpc:. *.proto
+    gcloud app deploy
