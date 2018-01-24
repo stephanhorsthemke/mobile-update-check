@@ -1,0 +1,12 @@
+[
+  {
+    "key": "android/fitapp",
+    "rules": [
+      {
+        "osVersion": "=<5.0.1",
+        "productVersion": "=<2.0.10",
+        "action": "UPDATE"
+      }
+    ]
+  }
+]

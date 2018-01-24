@@ -1,7 +1,9 @@
 package mobileupdatecheck
 
 import (
-	"log"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Masterminds/semver"
@@ -14,42 +16,34 @@ const (
 )
 
 var (
-	rules = make(map[string][]*rule)
+	compiledRuleSets = make(map[string][]compiledRule)
 )
 
-type rule struct {
-	osVersion          string
-	osConstraints      *semver.Constraints
-	productVersion     string
-	productConstraints *semver.Constraints
-	action             string
+// RuleSet represents a set of rules for a give os/product combination
+type RuleSet struct {
+	Key   string
+	Rules []Rule
 }
 
-// compileRules pre-computes version contraints in the update rules to reduce
-// runtime latency and avoid duplicate work
-func compileRules() error {
-	for key := range rules {
-		for _, rule := range rules[key] {
-			var err error
-			rule.osConstraints, err = semver.NewConstraint(rule.osVersion)
-			if err != nil {
-				return err
-			}
-			rule.productConstraints, err = semver.NewConstraint(rule.productVersion)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+// Rule represents a single rule that is part of a RuleSet
+type Rule struct {
+	OSVersion      string
+	ProductVersion string
+	Action         string
+}
+
+type compiledRule struct {
+	osConstraints      *semver.Constraints
+	productConstraints *semver.Constraints
+	action             string
 }
 
 // handler checks if the request path is a valid rule set identifier and applies
 // all rules in a set if there is a match
 func handler(w http.ResponseWriter, r *http.Request) {
-	ruleSet := r.URL.Path[1:]
-	if _, ok := rules[ruleSet]; !ok {
-		w.WriteHeader(http.StatusForbidden)
+	key := r.URL.Path[1:]
+	if _, ok := compiledRuleSets[key]; !ok {
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 	osVersion, err := semver.NewVersion(r.URL.Query().Get("osVersion"))
@@ -62,34 +56,59 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	for _, rule := range rules[ruleSet] {
-		if rule.osConstraints.Check(osVersion) &&
-			rule.productConstraints.Check(productVersion) {
-			w.Write([]byte(`{ "action": "` + rule.action + `" }`))
+	for _, cr := range compiledRuleSets[key] {
+		if cr.osConstraints.Check(osVersion) &&
+			cr.productConstraints.Check(productVersion) {
+			w.Write([]byte(`{ "action": "` + cr.action + `" }`))
 			return
 		}
 	}
 	w.Write([]byte(`{ "action": "` + actionNone + `" }`))
 }
 
+func loadRuleSets(fname string) (map[string][]compiledRule, error) {
+	var ruleSets []RuleSet
+
+	// read rules file
+	buf, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return nil, fmt.Errorf("read rules: %v", err)
+	}
+	// parse rules file
+	err = json.Unmarshal(buf, &ruleSets)
+	if err != nil {
+		return nil, fmt.Errorf("parse rules: %v", err)
+	}
+
+	// compile rules contraints
+	crs := make(map[string][]compiledRule)
+	for _, ruleSet := range ruleSets {
+		if _, ok := crs[ruleSet.Key]; !ok {
+			crs[ruleSet.Key] = []compiledRule{}
+		}
+		for _, rule := range ruleSet.Rules {
+			var cr compiledRule
+			var err error
+			cr.osConstraints, err = semver.NewConstraint(rule.OSVersion)
+			if err != nil {
+				return nil, fmt.Errorf("parse constraint: %v", err)
+			}
+			cr.productConstraints, err = semver.NewConstraint(rule.ProductVersion)
+			if err != nil {
+				return nil, fmt.Errorf("parse constraint: %v", err)
+			}
+			crs[ruleSet.Key] = append(crs[ruleSet.Key], cr)
+		}
+	}
+	return crs, nil
+}
+
 func init() {
-	rules["ios/fitapp"] = []*rule{} // empty rule set
-	rules["ios/trainerapp"] = []*rule{
-		{
-			osVersion:      "9.0.0",
-			productVersion: "2.3.0",
-			action:         actionForceUpdate,
-		},
+	var err error
+	compiledRuleSets, err = loadRuleSets("rules.json")
+	if err != nil {
+		panic(err)
 	}
-	rules["android/fitapp"] = []*rule{{
-		osVersion:      ">=8.0.0, <9.0.0",
-		productVersion: "<=2.3.0",
-		action:         actionUpdate,
-	}}
-
-	if err := compileRules(); err != nil {
-		log.Fatalf("compile rules: %v", err)
-	}
-
 	http.HandleFunc("/", handler)
+	//http.ListenAndServe(":8080", nil)
 }
