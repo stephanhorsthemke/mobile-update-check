@@ -97,18 +97,20 @@ func loadRuleSets(fname string) (map[string][]compiledRule, error) {
 			if err != nil {
 				return nil, fmt.Errorf("parse constraint: %v", err)
 			}
+			cr.action = rule.Action
 			crs[ruleSet.Key] = append(crs[ruleSet.Key], cr)
 		}
 	}
 	return crs, nil
 }
 
-func init() {
+func main() {
 	var err error
 	compiledRuleSets, err = loadRuleSets("rules.json")
 	if err != nil {
 		panic(err)
 	}
+
 	http.HandleFunc("/", handler)
-	//http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", nil)
 }

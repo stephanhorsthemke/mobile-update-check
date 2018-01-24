@@ -1,6 +1,8 @@
 package mobileupdatecheck
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"testing"
 
@@ -30,12 +32,13 @@ func TestRuleCompile(t *testing.T) {
 	}
 	// all good
 	{
-
+		// TBD
 	}
 }
 
-/*
-func TestForbiddenQueries(t *testing.T) {
+func TestBadQueries(t *testing.T) {
+	compiledRuleSets, _ = loadRuleSets(path.Join("testdata", "rules.json"))
+	// missing os/product combination
 	{
 		req, err := http.NewRequest("GET", "/", nil)
 		assert.Equal(t, nil, err)
@@ -43,9 +46,10 @@ func TestForbiddenQueries(t *testing.T) {
 		rr := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusForbidden, rr.Code)
+		assert.Equal(t, http.StatusNoContent, rr.Code)
 		assert.Equal(t, "", rr.Body.String())
 	}
+	// invalid os/product combination
 	{
 		req, err := http.NewRequest("GET",
 			"/foo/barapp?osVersion=1.0.0&productVersion=1.2.3", nil)
@@ -54,14 +58,13 @@ func TestForbiddenQueries(t *testing.T) {
 		rr := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusForbidden, rr.Code)
+		assert.Equal(t, http.StatusNoContent, rr.Code)
 		assert.Equal(t, "", rr.Body.String())
 	}
-}
-
-func TestHandlerInvalidQueries(t *testing.T) {
+	// missing os version
 	{
-		req, err := http.NewRequest("GET", "/ios/fitapp", nil)
+		req, err := http.NewRequest("GET",
+			"/android/fitapp?productVersion=1.2.3", nil)
 		assert.Equal(t, nil, err)
 
 		rr := httptest.NewRecorder()
@@ -70,8 +73,10 @@ func TestHandlerInvalidQueries(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 		assert.Equal(t, "", rr.Body.String())
 	}
+	// missing product version
 	{
-		req, err := http.NewRequest("GET", "/ios/fitapp?osVersion=1.0.0", nil)
+		req, err := http.NewRequest("GET",
+			"/android/fitapp?osVersion=1.2.3", nil)
 		assert.Equal(t, nil, err)
 
 		rr := httptest.NewRecorder()
@@ -82,22 +87,30 @@ func TestHandlerInvalidQueries(t *testing.T) {
 	}
 }
 
-*/
+func TestGoodQueries(t *testing.T) {
+	compiledRuleSets, _ = loadRuleSets(path.Join("testdata", "rules.json"))
+	// rule match
+	{
+		req, err := http.NewRequest("GET",
+			"/android/fitapp?osVersion=1.0.0&productVersion=1.0.0", nil)
+		assert.Equal(t, nil, err)
 
-/*
-func TestHandlerGoodQueries(t *testing.T) {
-	for _, tc := range testCases {
-		{
-			req, err := http.NewRequest("GET", "/"+tc.os+"/"+tc.product+
-				"?osVersion="+tc.osVersion+"&productVersion="+tc.productVersion, nil)
-			assert.Equal(t, nil, err)
+		rr := httptest.NewRecorder()
+		http.HandlerFunc(handler).ServeHTTP(rr, req)
 
-			rr := httptest.NewRecorder()
-			http.HandlerFunc(handler).ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "{ \"action\": \"UPDATE\" }", rr.Body.String())
+	}
+	// no rule match
+	{
+		req, err := http.NewRequest("GET",
+			"/android/fitapp?osVersion=999.0.0&productVersion=999.0.0", nil)
+		assert.Equal(t, nil, err)
 
-			assert.Equal(t, http.StatusOK, rr.Code)
-			assert.Equal(t, `{ "action": "`+tc.expectedAction+`" }`, rr.Body.String())
-		}
+		rr := httptest.NewRecorder()
+		http.HandlerFunc(handler).ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "{ \"action\": \"NONE\" }", rr.Body.String())
 	}
 }
-*/
