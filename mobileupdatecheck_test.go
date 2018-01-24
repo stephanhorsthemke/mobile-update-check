@@ -1,4 +1,4 @@
-package mobileupdatecheck
+package main
 
 import (
 	"net/http"
