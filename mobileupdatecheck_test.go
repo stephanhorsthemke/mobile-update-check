@@ -127,3 +127,46 @@ func TestGoodQueries(t *testing.T) {
 		assert.Equal(t, "{ \"action\": \"NONE\" }", rr.Body.String())
 	}
 }
+
+func TestFirstRuleMatch(t *testing.T) {
+	// test that the correct rule is being used -> so the rule was added at the correct spot
+	{
+		compiledRuleSets, _ = loadRuleSets(path.Join("testdata", "rules-order-correct.json"))
+		{
+			req, err := http.NewRequest("GET",
+				"/ios/fitapp?osVersion=5.0.1&productVersion=2.0.10", nil)
+			assert.Equal(t, nil, err)
+
+			rr := httptest.NewRecorder()
+			http.HandlerFunc(handler).ServeHTTP(rr, req)
+
+			assert.Equal(t, http.StatusOK, rr.Code)
+			assert.Equal(t, "{ \"action\": \"FORCE\" }", rr.Body.String())
+		}
+		{
+			req, err := http.NewRequest("GET",
+				"/ios/fitapp?osVersion=5.0.1&productVersion=3.0.10", nil)
+			assert.Equal(t, nil, err)
+
+			rr := httptest.NewRecorder()
+			http.HandlerFunc(handler).ServeHTTP(rr, req)
+
+			assert.Equal(t, http.StatusOK, rr.Code)
+			assert.Equal(t, "{ \"action\": \"ADVICE\" }", rr.Body.String())
+		}
+	}
+	// test that the wrong rule is being used -> so the rule was added at the wrong spot
+	{
+		compiledRuleSets, _ = loadRuleSets(path.Join("testdata", "rules-order-wrong.json"))
+		req, err := http.NewRequest("GET",
+			"/ios/fitapp?osVersion=5.0.1&productVersion=2.0.10", nil)
+		assert.Equal(t, nil, err)
+
+		rr := httptest.NewRecorder()
+		http.HandlerFunc(handler).ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.NotEqual(t, "{ \"action\": \"FORCE\" }", rr.Body.String())
+		assert.Equal(t, "{ \"action\": \"NONE\" }", rr.Body.String())
+	}
+}
