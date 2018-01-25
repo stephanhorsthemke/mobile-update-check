@@ -8,6 +8,11 @@
 The Mobile-Update-Check offers a simple way to check an apps version and
 potentially request an update from the user if necessary.
 
+Currently only product and os-version numbers of the following format are supported:
+```
+MAJOR.MINOR.PATCH
+```
+
 # Adding Update Rules
 In order to add a rule for an application, one needs to add the rules to the
 
