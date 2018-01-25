@@ -32,7 +32,9 @@ func TestRuleCompile(t *testing.T) {
 	}
 	// all good
 	{
-		// TBD
+		r, err := loadRuleSets(path.Join("testdata", "all-good.json"))
+		assert.Equal(t, nil, err)
+		assert.Equal(t, actionUpdate, r["android/fitapp"][0].action)
 	}
 }
 
@@ -46,7 +48,18 @@ func TestBadQueries(t *testing.T) {
 		rr := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusNoContent, rr.Code)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Equal(t, "", rr.Body.String())
+	}
+	// missing queryparams
+	{
+		req, err := http.NewRequest("GET", "/android/fitapp", nil)
+		assert.Equal(t, nil, err)
+
+		rr := httptest.NewRecorder()
+		http.HandlerFunc(handler).ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
 		assert.Equal(t, "", rr.Body.String())
 	}
 	// invalid os/product combination
@@ -99,7 +112,7 @@ func TestGoodQueries(t *testing.T) {
 		http.HandlerFunc(handler).ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.Equal(t, "{ \"action\": \"UPDATE\" }", rr.Body.String())
+		assert.Equal(t, "{ \"action\": \"ADVICE\" }", rr.Body.String())
 	}
 	// no rule match
 	{

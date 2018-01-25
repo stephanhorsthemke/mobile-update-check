@@ -11,8 +11,8 @@ import (
 
 const (
 	actionNone        = "NONE"
-	actionUpdate      = "UPDATE"
-	actionForceUpdate = "FORCE_UPDATE"
+	actionUpdate      = "ADVICE"
+	actionForceUpdate = "FORCE"
 )
 
 var (
@@ -41,6 +41,12 @@ type compiledRule struct {
 // handler checks if the request path is a valid rule set identifier and applies
 // all rules in a set if there is a match
 func handler(w http.ResponseWriter, r *http.Request) {
+
+	if r.URL.Path[0:1] == "/" && len(r.URL.Path) == 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	key := r.URL.Path[1:]
 	if _, ok := compiledRuleSets[key]; !ok {
 		w.WriteHeader(http.StatusNoContent)
