@@ -5,22 +5,20 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/egymgmbh/mobile-update-check)](https://goreportcard.com/report/github.com/egymgmbh/mobile-update-check)
 [![eGym Core Team](https://img.shields.io/badge/eGym-Core%20Team-orange.svg)](https://www.egym.com/)
 
-The Mobile-Update-Check offers a simple way to check an apps version and
+The Mobile-Update-Check offers a simple way to check an app's version and
 potentially request an update from the user if necessary.
 
-Currently only product and os-version numbers of the following format are supported:
+Currently only the [Semantiv Versioning](https://semver.org/) convention is supported
+for product and os-version numbers:
 ```
 MAJOR.MINOR.PATCH
 ```
 
 # Adding Update Rules
-In order to add a rule for an application, one needs to add the rules to the
+In order to add a rule for an application, one needs to add the rules to the `rules.json`.
 
-```
-rules.json
-```
-The rules.json file contains a list of rules-sets. Each ruleset contains a list of rules for a key.
-A key is the `os/product` combination e.g. `ios/fitapp` which also is the path used then for the GET request.
+The rules.json file contains a list of rules-sets. Each rule-set contains a list of rules for a key.
+A key is the `os/product` combination e.g. `ios/fitapp` which also is the path used then for the `GET` request.
 
 An example for the rules.json could look as follows:
 
